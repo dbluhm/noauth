@@ -7,14 +7,11 @@ body, h1, p, ul, li, nav, main, footer {
 
 :root {
   /* Primary Colors */
-  --indicio-blue: #12264D;
-  --proven-blue: #283E73;
   --light-blue: #9CC4E8;
   --white-blue: #D9E3F6;
 
   /* Secondary Colors */
-  --academy-red: #74172D;
-  --indicio-orange: #DF7D21;
+  --red: #74172D;
   --light-orange: #F1AD2E;
   --light-yellow: #F3C342;
 
