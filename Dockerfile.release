@@ -1,0 +1,30 @@
+FROM python:3.11-slim-bookworm AS base
+WORKDIR /usr/src/app
+
+RUN apt-get update && apt-get install -y curl && apt-get clean
+ENV PDM_VERSION=2.15.4
+ENV PDM_HOME=/opt/pdm
+RUN curl -sSL https://pdm-project.org/install-pdm.py | python3 -
+
+FROM python:3.11-slim-bookworm AS builder
+WORKDIR /usr/src/app
+COPY --from=base /opt/pdm /opt/pdm
+
+ENV PATH="/opt/pdm/bin:$PATH"
+
+# Setup project
+COPY pyproject.toml pdm.lock README.md ./
+RUN pdm install --without dev
+
+FROM python:3.11-slim-bookworm
+WORKDIR /usr/src/app
+COPY --from=builder /usr/src/app/.venv /usr/src/app/.venv
+ENV PATH="/usr/src/app/.venv/bin:$PATH"
+
+COPY healthcheck.py ./
+COPY default.noauth.toml ./noauth.toml
+COPY noauth ./noauth
+COPY static ./static
+
+ENTRYPOINT ["uvicorn", "noauth.main:app"]
+CMD ["--host", "0.0.0.0", "--port", "80"]

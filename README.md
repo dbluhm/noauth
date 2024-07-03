@@ -56,3 +56,9 @@ Hit Finish. This will bring up the authorization page where you can submit the d
 After hitting submit, you should see a "Test completed successfully screen" with a summary of the contents of the ID token.
 
 You can now sign out of the admin user and try signing in with the noauth provider.
+
+## Configuration
+
+See `default.noauth.toml` for a sample configuration file. Adjust as desired.
+
+If running locally, copy this file to `noauth.toml`. If running with docker, insert this file by build or volume into the container's working directory as `noauth.toml`.

@@ -28,9 +28,7 @@ async def init_deps(app: FastAPI):
     with open("noauth.toml", "rb") as f:
         config = tomllib.load(f)
 
-    print(config)
     default_user = AuthUserAttributes.deserialize(config["noauth"]["default"])
-    print(default_user.serialize())
 
     async with store.session() as session:
         key_entry = await session.fetch_key("jwt")
