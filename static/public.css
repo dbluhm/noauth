@@ -1,0 +1,104 @@
+/* Basic Reset */
+body, h1, p, ul, li, nav, main, footer {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Primary Colors */
+  --indicio-blue: #12264D;
+  --proven-blue: #283E73;
+  --light-blue: #9CC4E8;
+  --white-blue: #D9E3F6;
+
+  /* Secondary Colors */
+  --academy-red: #74172D;
+  --indicio-orange: #DF7D21;
+  --light-orange: #F1AD2E;
+  --light-yellow: #F3C342;
+
+  /* Grayscale */
+  --black: #121212;
+  --dark-gray: #3D3D3D;
+  --mid-dark-gray: #4D4D4D;
+  --medium-gray: #ACACAC;
+  --light-gray: #EBEBEB;
+  --white: #FCFCFC;
+}
+
+* {
+  font-family: Open Sans, sans-serif;
+}
+
+h1, h2, h3 {
+  line-height: 1.25em;
+}
+
+h1 {
+  font-weight: bold;
+  font-size: 36px;
+}
+
+h2 {
+  font-weight: bold;
+  font-size: 24px;
+}
+
+h3 {
+  font-weight: bolder;
+  font-size: 20px;
+}
+
+p {
+  line-height: 1.3em;
+}
+
+body {
+  line-height: 1.6em;
+  color: var(--black);
+  background: var(--white);
+}
+
+header, nav, main, footer {
+  padding: 1rem;
+}
+
+header {
+  background: var(--indicio-blue);
+  color: var(--white);
+}
+
+.logo {
+  height: 50px;
+}
+
+.company-name {
+  font-size: 1.2rem;
+  align-self: center;
+  margin-left: 10px;
+}
+
+.logo-and-name {
+  display: flex;
+}
+
+
+main {
+  padding: 20px;
+  background: var(--white);
+  min-height: 100vh;
+}
+
+footer {
+  background: var(--dark-gray);
+  color: var(--white);
+  text-align: center;
+  padding: 10px;
+  bottom: 0;
+}
+
+footer p {
+  padding: 10px;
+  margin: 0;
+}

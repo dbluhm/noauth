@@ -1,0 +1,42 @@
+version: '3'
+services:
+
+  noauth:
+    platform: linux/amd64
+    image: noauth
+    build:
+      context: ..
+    ports:
+      - "8080:80"
+    volumes:
+      - "../noauth:/usr/src/app/noauth:z"
+      - "../static:/usr/src/app/static:z"
+    healthcheck:
+      test: python healthcheck.py
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  wordpress:
+    image: wordpress:latest
+    ports:
+      - "8888:80"
+    environment:
+      WORDPRESS_DB_HOST: wpdb
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    depends_on:
+      wpdb:
+        condition: service_started
+      noauth:
+        condition: service_healthy
+
+  wpdb:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: somewordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
