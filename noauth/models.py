@@ -5,6 +5,18 @@ from typing import Tuple
 
 
 @dataclass
+class OIDCConfig:
+    """OIDC Configuration."""
+
+    issuer: str
+
+    @classmethod
+    def deserialize(cls, value: dict) -> "OIDCConfig":
+        """Deserialize config."""
+        return cls(**value)
+
+
+@dataclass
 class AuthUserAttributes:
     """Attributes we gather about users to authenticate."""
 

@@ -10,7 +10,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 
 from noauth.dependencies import setup
-from noauth.models import AuthUserAttributes
+from noauth.models import AuthUserAttributes, OIDCConfig
 
 from . import oidc
 from .templates import templates
@@ -29,6 +29,7 @@ async def init_deps(app: FastAPI):
         config = tomllib.load(f)
 
     default_user = AuthUserAttributes.deserialize(config["noauth"]["default"])
+    oidc = OIDCConfig.deserialize(config["noauth"]["oidc"])
 
     async with store.session() as session:
         key_entry = await session.fetch_key("jwt")
@@ -36,7 +37,7 @@ async def init_deps(app: FastAPI):
             key = Key.generate(KeyAlg.ED25519)
             await session.insert_key("jwt", key)
 
-    setup(store, default_user)
+    setup(store, oidc, default_user)
 
     try:
         yield

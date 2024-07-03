@@ -14,10 +14,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.datastructures import UploadFile
 
-from noauth.dependencies import Store, get, default_user
+from noauth.dependencies import Store, get, default_user, oidc_config
 from noauth.templates import templates
 from noauth import jwt
-from noauth.models import AuthUserAttributes
+from noauth.models import AuthUserAttributes, OIDCConfig
 
 
 router = APIRouter()
@@ -230,6 +230,7 @@ class TokenForm:
 async def token(
     request: Request,
     store: AStore = Depends(get(Store)),
+    config: OIDCConfig = Depends(get(oidc_config)),
 ):
     """OIDC Token endpoint."""
     form = TokenForm.validate(await request.form())
@@ -268,7 +269,7 @@ async def token(
             "iat": now,
             "auth_time": now,
             "jti": str(uuid4()),
-            "iss": "http://noauth:8080",
+            "iss": config.issuer,
             "aud": oidc.client_id,
             "typ": "ID",
             "azp": oidc.client_id,

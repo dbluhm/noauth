@@ -1,3 +1,6 @@
+[noauth.oidc]
+issuer = "http://noauth"
+
 [noauth.default]
 given_name = "Alice"
 family_name = "Edwards"

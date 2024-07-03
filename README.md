@@ -47,7 +47,7 @@ Add "openid" to scopes.
 
 Set the Authorization endpoint to `http://localhost:8080/oidc/authorize`.
 
-Set the token endpoint to `http://noauth:8080/oidc/token`.
+Set the token endpoint to `http://noauth:80/oidc/token`.
 
 Hit next. On the Summary page, check the `Body` check box under "Send client credentials in"
 
