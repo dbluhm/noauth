@@ -6,4 +6,4 @@ given_name = "Alice"
 family_name = "Edwards"
 email = "alice@example.com"
 preferred_username = "alice"
-roles = "admin"
+roles = ["admin"]

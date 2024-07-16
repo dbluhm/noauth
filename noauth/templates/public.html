@@ -6,9 +6,8 @@
     <title>{% block title %}NoAuth{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', path='/public.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css">
-    <script src="https://unpkg.com/htmx.org@2.0.0"></script>
-    <script src="https://unpkg.com/htmx-ext-sse@2.1.0/sse.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsoneditor@10.1.0/dist/jsoneditor.min.js" integrity="sha256-a3eSI/lECQPtjYSlyFNeY7HYRo29bWrtQsIkGh3kE48=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsoneditor@10.1.0/dist/jsoneditor.min.css" integrity="sha256-4V053HdAjQjEf/Vbc8uTc9nXlfe1zEdyvnJrCyi19e0=" crossorigin="anonymous">
     {% block head %}{% endblock %}
   </head>
   <body>

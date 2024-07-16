@@ -4,11 +4,11 @@ from contextvars import Context, ContextVar
 from typing import Callable, TypeVar, cast
 from aries_askar import Store as AStore
 
-from noauth.models import AuthUserAttributes, OIDCConfig
+from noauth.models import OIDCConfig
 
 
 Store: ContextVar[AStore] = ContextVar("Store")
-default_user: ContextVar[AuthUserAttributes] = ContextVar("default_user")
+default_user: ContextVar[dict] = ContextVar("default_user")
 oidc_config: ContextVar[OIDCConfig] = ContextVar("oidc_config")
 
 context = Context()
@@ -28,7 +28,7 @@ def get(var: ContextVar[T]) -> Callable[[], T]:
 def setup(
     store: AStore,
     oidc: OIDCConfig,
-    user: AuthUserAttributes,
+    user: dict,
 ):
     """Setup context."""
 

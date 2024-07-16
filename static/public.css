@@ -24,7 +24,7 @@ body, h1, p, ul, li, nav, main, footer {
   --white: #FCFCFC;
 }
 
-* {
+h2, p, button {
   font-family: Open Sans, sans-serif;
 }
 
@@ -57,34 +57,21 @@ body {
   background: var(--white);
 }
 
-header, nav, main, footer {
+main, footer {
   padding: 1rem;
 }
 
-header {
-  background: var(--indicio-blue);
-  color: var(--white);
-}
-
-.logo {
-  height: 50px;
-}
-
-.company-name {
-  font-size: 1.2rem;
-  align-self: center;
-  margin-left: 10px;
-}
-
-.logo-and-name {
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
   display: flex;
+  flex-direction: column;
 }
-
-
 main {
   padding: 20px;
   background: var(--white);
-  min-height: 100vh;
+  flex: 1;
 }
 
 footer {
@@ -92,7 +79,7 @@ footer {
   color: var(--white);
   text-align: center;
   padding: 10px;
-  bottom: 0;
+  width: 100%;
 }
 
 footer p {

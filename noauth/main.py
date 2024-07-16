@@ -6,14 +6,13 @@ from os import getenv
 import tomllib
 
 from aries_askar import Key, KeyAlg, Store as AStore
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from noauth.dependencies import setup
-from noauth.models import AuthUserAttributes, OIDCConfig
+from noauth.models import OIDCConfig
 
 from . import oidc
-from .templates import templates
 
 ACAPY = getenv("ACAPY", "http://localhost:3001")
 
@@ -28,7 +27,10 @@ async def init_deps(app: FastAPI):
     with open("noauth.toml", "rb") as f:
         config = tomllib.load(f)
 
-    default_user = AuthUserAttributes.deserialize(config["noauth"]["default"])
+    default_user = config["noauth"]["default"]
+    if not isinstance(default_user, dict):
+        raise ValueError("noauth.default must be a table")
+
     oidc = OIDCConfig.deserialize(config["noauth"]["oidc"])
 
     async with store.session() as session:
@@ -46,13 +48,6 @@ async def init_deps(app: FastAPI):
 
 
 app = FastAPI(lifespan=init_deps)
-
-
-@app.get("/")
-async def root(request: Request):
-    """Landing page."""
-    return templates.TemplateResponse(request, "root.html")
-
 
 app.include_router(oidc.router)
 app.mount("/", StaticFiles(directory="static"), name="static")
