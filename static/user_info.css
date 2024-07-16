@@ -1,42 +1,25 @@
 .form-container {
-    background-color: var(--white);
-    padding: 40px;
-    width: 600px;
-    margin: 50px auto;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    border-radius: 8px;
+  background-color: var(--white);
+  padding: 40px;
+  width: 600px;
+  margin: 50px auto;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  border-radius: 8px;
 }
 
 .form-container h2 {
-    text-align: center;
-    color: var(--dark-gray);
+  text-align: center;
+  color: var(--dark-gray);
 }
 
 .form-container p {
-    text-align: center;
-    color: var(--mid-dark-gray);
-    margin-bottom: 30px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    color: var(--dark-gray);
-}
-
-.form-group input[type="text"], .form-group input[type="email"] {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
+  text-align: center;
+  color: var(--mid-dark-gray);
+  margin-bottom: 30px;
 }
 
 .controls {
+  margin-top: 20px;
   display: flex;
   flex-direction: row;
 }
@@ -51,38 +34,28 @@
 }
 
 .btn-submit {
-    padding: 10px;
-    background-color: var(--dark-gray);
-    color: var(--white);
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
+  padding: 10px;
+  background-color: var(--dark-gray);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
 }
 
 .btn-submit:hover {
-    background-color: var(--mid-dark-gray);
-}
-
-.btn-cancel {
-    padding: 10px;
-    background-color: var(--mid-dark-gray);
-    background-color: var(--medium-gray);
-    color: var(--dark-gray);
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-.btn-cancel:hover {
-    background-color: var(--mid-dark-gray);
-    color: var(--white);
+  background-color: var(--mid-dark-gray);
 }
 
 .warning {
-    color: var(--red);
-    text-align: center;
-    font-weight: bold;
-    margin-bottom: 1rem;
+  font-family: Open Sans, sans-serif;
+  color: var(--red);
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+#jsoneditor {
+  min-height: 300px;
+  height: 40vh;
 }

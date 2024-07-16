@@ -10,14 +10,14 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from uuid import uuid4
 
 from aries_askar import Key, Store as AStore
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.datastructures import UploadFile
 
 from noauth.dependencies import Store, get, default_user, oidc_config
 from noauth.templates import templates
 from noauth import jwt
-from noauth.models import AuthUserAttributes, OIDCConfig
+from noauth.models import OIDCConfig
 
 
 router = APIRouter()
@@ -153,12 +153,16 @@ async def authorize(
 
 @router.post("/oidc/submit/{id}", response_class=RedirectResponse)
 async def submit_and_redirect(
-    request: Request,
     id: str,
+    claims: str = Form(),
     store: AStore = Depends(get(Store)),
 ):
     """Redirect back to the client."""
-    form = await request.form()
+    try:
+        parsed_claims = json.loads(claims)
+    except json.JSONDecodeError:
+        raise HTTPException(400, "Invalid claims")
+
     async with store.session() as session:
         oidc_entry = await session.fetch("oidc", id, for_update=True)
 
@@ -167,7 +171,7 @@ async def submit_and_redirect(
 
         oidc = OIDCRecord.deserialize(oidc_entry.value_json)
         assert oidc.code
-        oidc.claims = dict(form)
+        oidc.claims = parsed_claims
         await session.replace(
             "oidc", id, value_json=oidc.serialize(), tags={"code": oidc.code}
         )
@@ -255,7 +259,6 @@ async def token(
         key = cast(Key, key_entry.key)
 
     assert oidc.claims
-    user, extra = AuthUserAttributes.deserialize_with_extra(oidc.claims)
 
     now = int(time())
 
@@ -274,8 +277,7 @@ async def token(
             "typ": "ID",
             "azp": oidc.client_id,
             "sub": oidc.id,
-            **user.to_claims(),
-            **extra,
+            **oidc.claims,
         },
         key=key,
     )

@@ -4,7 +4,6 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', path='/user_info.css') }}">
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -17,81 +16,33 @@
       <br />
       Never use this service in production.
     </div>
-    <form action="{{ url_for('submit_and_redirect', id=id) }}" method="POST"
-      x-data="{
-        given_name: '{{ default.given_name }}',
-        family_name: '{{ default.family_name }}',
-        email: '{{ default.email }}',
-        preferred_username: '{{ default.preferred_username }}',
-        roles: '{{ default.roles }}'
-      }"
-      >
-        <div class="form-group">
-            <label for="given-name">Given Name</label>
-            <input
-              type="text"
-              id="given-name"
-              name="given_name"
-              x-model="given_name"
-              placeholder="Enter your given name"
-              required
-              >
-        </div>
-        <div class="form-group">
-            <label for="family-name">Family Name</label>
-            <input
-              type="text"
-              id="family-name"
-              name="family_name"
-              x-model="family_name"
-              placeholder="Enter your family name"
-              required
-              >
-        </div>
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              x-model="email"
-              placeholder="Enter your email"
-              required
-              >
-        </div>
-        <div class="form-group">
-            <label for="username">Preferred Username</label>
-            <input
-              type="text"
-              id="username"
-              name="preferred_username"
-              x-model="preferred_username"
-              placeholder="Enter your preferred username"
-              required
-              >
-        </div>
-        <div class="form-group">
-            <label for="roles">Roles</label>
-            <input
-              type="text"
-              id="roles"
-              name="roles"
-              x-model="roles"
-              placeholder="Enter your roles (space separated)"
-              required
-              >
-        </div>
-        <div class="form-group controls">
-          <button type="submit" class="btn-submit">Submit</button>
-          <button type="button" class="btn-cancel"
-            @click="
-              given_name = '';
-              family_name = '';
-              email = '';
-              preferred_username = '';
-              roles = '';
-            ">Clear</button>
-        </div>
+    <form id="claimform" action="{{ url_for('submit_and_redirect', id=id) }}" method="POST">
+      <div id="jsoneditor"></div>
+      <input type="hidden" name="claims" id="claims">
+      <div class="controls">
+        <button type="submit" class="btn-submit">Submit</button>
+      </div>
     </form>
+
+    <script>
+      // Create the editor
+      const container = document.getElementById("jsoneditor");
+      const options = {
+        mode: "code",
+        modes: ["tree", "code"]
+      };
+      const editor = new JSONEditor(container, options);
+
+      // Set initial JSON
+      const initialJson = {{ default | tojson }};
+      editor.set(initialJson);
+
+      // Handle form submission
+      const form = document.getElementById("claimform");
+      form.addEventListener('submit', function(event) {
+        const updatedJson = editor.get();
+        document.getElementById("claims").value = JSON.stringify(updatedJson);
+      });
+    </script>
 </div>
 {% endblock %}
