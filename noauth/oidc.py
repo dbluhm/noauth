@@ -178,7 +178,7 @@ async def submit_and_redirect(
 
     return RedirectResponse(
         url_with_query(oidc.redirect_uri, state=oidc.state, code=oidc.code),
-        status_code=307,
+        status_code=303,
     )
 
 
