@@ -3,14 +3,14 @@
 from contextlib import asynccontextmanager
 import logging
 from os import getenv
-import tomllib
+from pathlib import Path
 
 from aries_askar import Key, KeyAlg, Store as AStore
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from noauth.config import NoAuthConfig
 from noauth.dependencies import setup
-from noauth.models import OIDCConfig
 
 from . import oidc
 
@@ -22,16 +22,12 @@ logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
 @asynccontextmanager
 async def init_deps(app: FastAPI):
     """Test connectivity to ACA-Py."""
-    store_key = AStore.generate_raw_key()
-    store = await AStore.provision("sqlite://:memory:", "raw", store_key)
-    with open("noauth.toml", "rb") as f:
-        config = tomllib.load(f)
-
-    default_user = config["noauth"]["default"]
-    if not isinstance(default_user, dict):
-        raise ValueError("noauth.default must be a table")
-
-    oidc = OIDCConfig.deserialize(config["noauth"]["oidc"])
+    config = NoAuthConfig.load("./noauth.toml")
+    store_path = Path("/var/lib/noauth/store.db")
+    store_path.parent.mkdir(parents=True, exist_ok=True)
+    store = await AStore.provision(
+        f"sqlite://{store_path}", "kdf:argon2i", config.passphrase
+    )
 
     async with store.session() as session:
         key_entry = await session.fetch_key("jwt")
@@ -39,7 +35,7 @@ async def init_deps(app: FastAPI):
             key = Key.generate(KeyAlg.ED25519)
             await session.insert_key("jwt", key)
 
-    setup(store, oidc, default_user)
+    setup(store, config, config.default)
 
     try:
         yield

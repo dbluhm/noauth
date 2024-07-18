@@ -11,6 +11,9 @@ services:
     volumes:
       - "../noauth:/usr/src/app/noauth:z"
       - "../static:/usr/src/app/static:z"
+    environment:
+      NOAUTH_ISSUER: http://noauth
+      NOAUTH_PASSPHRASE: insecure
     healthcheck:
       test: python healthcheck.py localhost 80
       start_period: 10s
