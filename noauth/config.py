@@ -48,18 +48,14 @@ class NoAuthConfig(BaseModel):
 
             config.update(table.get("noauth", {}))
 
-        print(config)
-
         env_to_config = {
             f"NOAUTH_{field.upper()}": field for field in cls.model_fields.keys()
         }
-        print(env_to_config)
         for var in env_to_config.keys():
             value = getenv(var)
             if value:
                 config[env_to_config[var]] = value
 
-        print(config)
         try:
             return cls.model_validate(config)
         except ValidationError as err:
