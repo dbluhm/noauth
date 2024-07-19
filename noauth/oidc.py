@@ -77,13 +77,15 @@ class OpenIDConfiguration:
 
 
 @router.get("/.well-known/openid-configuration")
-async def configuration():
+async def configuration(
+    config: NoAuthConfig = Depends(get(Config)),
+):
     """Return openid-configuration."""
     return OpenIDConfiguration(
-        issuer="http://noauth:8080",
-        authorization_endpoint="http://noauth:8080/oidc/authorize",
-        token_endpoint="http://noauth:8080/oidc/token",
-        jwks_uri="http://noauth:8080/oidc/keys",
+        issuer=config.oidc.issuer,
+        authorization_endpoint=f"{config.oidc.issuer}/oidc/authorize",
+        token_endpoint=f"{config.oidc.issuer}/oidc/token",
+        jwks_uri=f"{config.oidc.issuer}/oidc/keys",
         response_types_supported=["code"],
         subject_types_supported=["public"],
         id_token_signing_alg_values_supported=["EdDSA"],
