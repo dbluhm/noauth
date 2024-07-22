@@ -9,6 +9,7 @@ from noauth.config import NoAuthConfig
 
 Store: ContextVar[AStore] = ContextVar("Store")
 default_user: ContextVar[dict] = ContextVar("default_user")
+default_token: ContextVar[dict] = ContextVar("default_token")
 Config: ContextVar[NoAuthConfig] = ContextVar("Config")
 
 context = Context()
@@ -29,6 +30,7 @@ def setup(
     store: AStore,
     config: NoAuthConfig,
     user: dict,
+    token: dict,
 ):
     """Setup context."""
 
@@ -36,5 +38,6 @@ def setup(
         Store.set(store)
         Config.set(config)
         default_user.set(user)
+        default_token.set(token)
 
     context.run(_setup)

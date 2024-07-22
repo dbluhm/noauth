@@ -1,0 +1,30 @@
+{% extends 'public.html' %}
+{% from "copy_button.html" import copy %}
+
+{% block title %}Token{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='/token.css') }}">
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="service-container">
+  <h2>Token</h2>
+  <p>Below is the generated token and its decoded value.</p>
+  <div class="info-section">
+    <label for="token">Token</label>
+    <div class="info">
+      <input type="text" id="token" value="{{token}}" readonly>
+      {{copy("token")}}
+    </div>
+  </div>
+  <div class="info-section">
+    <label for="value">Value</label>
+    <textarea id="value" readonly>{{token_value}}</textarea>
+  </div>
+  <div class="info-section">
+    <a class="btn-submit" href="{{new}}">New Token</a>
+  </div>
+</div>
+{% endblock %}

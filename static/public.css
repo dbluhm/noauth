@@ -24,7 +24,7 @@ body, h1, p, ul, li, nav, main, footer {
   --white: #FCFCFC;
 }
 
-h2, p, button {
+h2, p, button, input, a, label {
   font-family: Open Sans, sans-serif;
 }
 

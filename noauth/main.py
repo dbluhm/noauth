@@ -12,7 +12,8 @@ from fastapi.staticfiles import StaticFiles
 from noauth.config import NoAuthConfig
 from noauth.dependencies import setup
 
-from . import oidc
+from noauth import oidc
+from noauth import manual
 
 ACAPY = getenv("ACAPY", "http://localhost:3001")
 
@@ -35,7 +36,7 @@ async def init_deps(app: FastAPI):
             key = Key.generate(KeyAlg.ED25519)
             await session.insert_key("jwt", key)
 
-    setup(store, config, config.default)
+    setup(store, config, config.default, config.token or {})
 
     try:
         yield
@@ -46,4 +47,5 @@ async def init_deps(app: FastAPI):
 app = FastAPI(lifespan=init_deps)
 
 app.include_router(oidc.router)
+app.include_router(manual.router)
 app.mount("/", StaticFiles(directory="static"), name="static")

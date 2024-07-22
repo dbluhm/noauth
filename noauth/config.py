@@ -3,7 +3,7 @@
 from os import getenv
 from pathlib import Path
 import tomllib
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 from pydantic import BaseModel, ValidationError
 
@@ -29,6 +29,7 @@ class NoAuthConfig(BaseModel):
     passphrase: str
     oidc: OIDCConfig
     default: Dict[str, Any]
+    token: Optional[Dict[str, Any]] = None
 
     @classmethod
     def load(cls, path: Union[str, Path, None] = None) -> "NoAuthConfig":
@@ -44,7 +45,6 @@ class NoAuthConfig(BaseModel):
         if path.exists():
             with open(path, "rb") as f:
                 table = tomllib.load(f)
-            print(table)
 
             config.update(table.get("noauth", {}))
 

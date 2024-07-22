@@ -1,0 +1,78 @@
+.service-container {
+    background-color: var(--white);
+    padding: 40px;
+    width: 600px;
+    max-width: 600px;
+    margin: 50px auto;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+}
+
+.service-container p {
+  text-align: center;
+  color: var(--mid-dark-gray);
+  margin-bottom: 30px;
+}
+
+h2 {
+    text-align: center;
+    color: var(--dark-gray);
+    margin-bottom: 20px;
+}
+
+.info-section {
+    margin-bottom: 20px;
+}
+
+.info-section p {
+    color: var(--mid-dark-gray);
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--mid-dark-gray);
+}
+
+.info {
+    display: flex;
+    align-items: center;
+    background-color: var(--light-gray);
+    border-radius: 8px;
+    padding: .5rem;
+}
+
+input[type="text"], textarea {
+    flex-grow: 1;
+    padding: 10px;
+    border: 0;
+    margin-right: 10px;
+    background-color: var(--light-gray);
+    font-size: 14px;
+}
+input[type="text"]:focus-visible, textarea:focus-visible {
+  outline: none;
+}
+
+textarea {
+    height: 220px;
+    resize: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 10px;
+    background-color: var(--dark-gray);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    text-decoration: none;
+}
+
+.btn-submit:hover {
+    background-color: var(--mid-dark-gray);
+}

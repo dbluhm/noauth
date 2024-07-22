@@ -1,0 +1,52 @@
+{% extends 'public.html' %}
+
+{% block title %}User Info{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='/user_info.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Token Info</h2>
+    <p>Please fill out the form below to populate the Access Token.</p>
+    <div class="warning">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      This is for demonstration purposes only.
+      <br />
+      Never use this service in production.
+    </div>
+    <form id="claimform" action="{{ url_for('post_manual_token_and_redirect') }}" method="POST">
+      <div id="jsoneditor"></div>
+      <input type="hidden" name="claims" id="claims">
+      <div class="form-group">
+        <label for="valid-for">Valid For</label>
+        <input type="number" id="valid-for" name="valid_for" placeholder="How long the token should be valid for" value=300 required>
+      </div>
+      <div class="controls">
+        <button type="submit" class="btn-submit">Submit</button>
+      </div>
+    </form>
+
+    <script>
+      // Create the editor
+      const container = document.getElementById("jsoneditor");
+      const options = {
+        mode: "code",
+        modes: ["tree", "code"]
+      };
+      const editor = new JSONEditor(container, options);
+
+      // Set initial JSON
+      const initialJson = {{ default | tojson }};
+      editor.set(initialJson);
+
+      // Handle form submission
+      const form = document.getElementById("claimform");
+      form.addEventListener('submit', function(event) {
+        const updatedJson = editor.get();
+        document.getElementById("claims").value = JSON.stringify(updatedJson);
+      });
+    </script>
+</div>
+{% endblock %}
