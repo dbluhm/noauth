@@ -1,0 +1,43 @@
+{% macro copy(target_id) %}
+<style>
+button.copy {
+    padding: 8px 12px;
+    background-color: var(--light-gray);
+    color: var(--mid-dark-gray);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button.copy:hover {
+    background-color: var(--mid-dark-gray);
+    color: var(--white);
+}
+
+button.copy.clicked {
+    background-color: var(--light-blue);
+    color: var(--white);
+}
+button.copy.clicked:hover {
+    background-color: var(--light-blue);
+    color: var(--white);
+}
+[x-cloak] { display: none !important; }
+</style>
+
+<button
+  x-cloak
+  x-data="{ clicked: false }"
+  class="copy"
+  :class="clicked ? 'clicked' : ''"
+  @click="
+    const copyText = document.getElementById('{{target_id}}');
+    navigator.clipboard.writeText(copyText.value)
+      .catch(err => console.error('Error in copying text: ', err));
+   clicked = true; setTimeout(() => clicked = false, 1000);
+   ">
+  <i x-show="!clicked" class="fa-solid fa-copy"></i>
+  <i x-show="clicked" class="fa-solid fa-check"></i>
+</button>
+{% endmacro %}

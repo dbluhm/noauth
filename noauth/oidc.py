@@ -145,7 +145,6 @@ async def authorize(
             value_json=oidc.serialize(),
         )
 
-    print(default_user)
     return templates.TemplateResponse(
         request=request,
         name="id_entry.html",
