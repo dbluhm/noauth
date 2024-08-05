@@ -14,7 +14,7 @@ from noauth import jwt
 from noauth.config import NoAuthConfig
 from noauth.oidc import url_with_query
 from noauth.templates import templates
-from noauth.dependencies import Config, Store, get, default_token
+from noauth.dependencies import config, default_token, store
 
 router = APIRouter(prefix="/manual")
 LOGGER = logging.getLogger("uvicorn.error." + __name__)
@@ -23,7 +23,7 @@ LOGGER = logging.getLogger("uvicorn.error." + __name__)
 @router.get("/token", response_class=HTMLResponse)
 async def manual_token(
     request: Request,
-    default_token: dict = Depends(get(default_token)),
+    default_token: dict = Depends(default_token),
 ):
     """Generate a token."""
     query = request.query_params
@@ -39,8 +39,8 @@ async def manual_token(
 async def post_manual_token_and_redirect(
     claims: str = Form(),
     valid_for: str = Form(),
-    store: AStore = Depends(get(Store)),
-    config: NoAuthConfig = Depends(get(Config)),
+    store: AStore = Depends(store),
+    config: NoAuthConfig = Depends(config),
 ):
     """Submit token form and get signed token."""
     try:

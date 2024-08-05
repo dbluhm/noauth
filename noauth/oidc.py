@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.datastructures import UploadFile
 
 from noauth.config import NoAuthConfig
-from noauth.dependencies import Store, get, default_user, Config
+from noauth.dependencies import config, default_user, store
 from noauth.templates import templates
 from noauth import jwt
 
@@ -78,7 +78,7 @@ class OpenIDConfiguration:
 
 @router.get("/.well-known/openid-configuration")
 async def configuration(
-    config: NoAuthConfig = Depends(get(Config)),
+    config: NoAuthConfig = Depends(config),
 ):
     """Return openid-configuration."""
     return OpenIDConfiguration(
@@ -94,7 +94,7 @@ async def configuration(
 
 @router.get("/oidc/keys")
 async def keys(
-    store: AStore = Depends(get(Store)),
+    store: AStore = Depends(store),
 ):
     """Return keys."""
     async with store.session() as session:
@@ -116,8 +116,8 @@ async def authorize(
     redirect_uri: str = Query(),
     scope: str = Query(),
     state: str = Query(),
-    store: AStore = Depends(get(Store)),
-    default_user: dict = Depends(get(default_user)),
+    store: AStore = Depends(store),
+    default_user: dict = Depends(default_user),
 ):
     """OIDC Authorize endpoint."""
     if response_type != "code":
@@ -156,7 +156,7 @@ async def authorize(
 async def submit_and_redirect(
     id: str,
     claims: str = Form(),
-    store: AStore = Depends(get(Store)),
+    store: AStore = Depends(store),
 ):
     """Redirect back to the client."""
     try:
@@ -234,8 +234,8 @@ class TokenForm:
 @router.post("/oidc/token")
 async def token(
     request: Request,
-    store: AStore = Depends(get(Store)),
-    config: NoAuthConfig = Depends(get(Config)),
+    store: AStore = Depends(store),
+    config: NoAuthConfig = Depends(config),
 ):
     """OIDC Token endpoint."""
     form = TokenForm.validate(await request.form())
