@@ -3,10 +3,9 @@
 import json
 import logging
 from time import time
-from typing import cast
 from uuid import uuid4
 
-from aries_askar import Key, Store as AStore
+from aries_askar import Key
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
@@ -14,7 +13,7 @@ from noauth import jwt
 from noauth.config import NoAuthConfig
 from noauth.oidc import url_with_query
 from noauth.templates import templates
-from noauth.dependencies import config, default_token, store
+from noauth.dependencies import config, default_token, key
 
 router = APIRouter(prefix="/manual")
 LOGGER = logging.getLogger("uvicorn.error." + __name__)
@@ -39,7 +38,7 @@ async def manual_token(
 async def post_manual_token_and_redirect(
     claims: str = Form(),
     valid_for: str = Form(),
-    store: AStore = Depends(store),
+    key: Key = Depends(key),
     config: NoAuthConfig = Depends(config),
 ):
     """Submit token form and get signed token."""
@@ -49,13 +48,6 @@ async def post_manual_token_and_redirect(
         raise HTTPException(400, "Invalid claims")
 
     valid = int(valid_for)
-
-    async with store.session() as session:
-        key_entry = await session.fetch_key("jwt")
-        if not key_entry:
-            LOGGER.error("key missing")
-            raise HTTPException(500)
-        key = cast(Key, key_entry.key)
 
     now = int(time())
 
