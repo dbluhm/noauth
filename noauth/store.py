@@ -89,7 +89,6 @@ class TemporalKVStore:
             expire_time = time.time() + ttl
             heapq.heappush(self.expiry_heap, (expire_time, key))
             self.new_expiry_event.set()
-            LOGGER.debug("heap status: %s", self.expiry_heap)
 
     async def get(self, key: str) -> Any:
         """Get a value."""

@@ -1,12 +1,16 @@
 """Common dependencies."""
 
 from contextlib import asynccontextmanager
+import logging
 from pathlib import Path
 from aries_askar import Key, KeyAlg
 from fastapi import FastAPI
 
 from noauth.config import NoAuthConfig
 from noauth.store import TemporalKVStore
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 _store: TemporalKVStore
@@ -60,7 +64,13 @@ async def setup(app: FastAPI):
     store_path.parent.mkdir(parents=True, exist_ok=True)
     _store = await TemporalKVStore().open()
 
-    _key = Key.generate(KeyAlg.ED25519)
+    LOGGER.debug(
+        "id_token_signed_response_alg: %s", _config.client.id_token_signed_response_alg
+    )
+    if _config.client.id_token_signed_response_alg == "ES256":
+        _key = Key.generate(KeyAlg.P256)
+    else:
+        _key = Key.generate(KeyAlg.ED25519)
 
     _default_user = _config.default
     _default_token = _config.token or {}

@@ -1,5 +1,6 @@
 """OpenID Connect."""
 
+from copy import deepcopy
 from dataclasses import asdict, dataclass
 import json
 import logging
@@ -22,7 +23,8 @@ from noauth import jwt
 
 
 router = APIRouter()
-LOGGER = logging.getLogger("uvicorn.error." + __name__)
+LOGGER = logging.getLogger(__name__)
+TTL = 30
 
 
 def url_with_query(url: str, **params: str) -> str:
@@ -89,7 +91,9 @@ async def configuration(
         jwks_uri=f"{config.oidc.issuer}/oidc/keys",
         response_types_supported=["code"],
         subject_types_supported=["public"],
-        id_token_signing_alg_values_supported=["EdDSA"],
+        id_token_signing_alg_values_supported=[
+            config.client.id_token_signed_response_alg
+        ],
     )
 
 
@@ -113,6 +117,7 @@ async def authorize(
     state: str = Query(),
     store: TemporalKVStore = Depends(store),
     default_user: dict = Depends(default_user),
+    config: NoAuthConfig = Depends(config),
 ):
     """OIDC Authorize endpoint."""
     if response_type != "code":
@@ -133,12 +138,18 @@ async def authorize(
         state=state,
         code=code,
     )
-    await store.set(key="oidc:" + oidc.id, value=oidc, ttl=5.0)
+    await store.set(key=f"oidc:{oidc.id}", value=oidc, ttl=30.0)
+    claims = deepcopy(default_user)
+    for scp in scope.split(" "):
+        if scp == "openid":
+            continue
+        if config.scopes and scp in config.scopes:
+            claims.update(config.scopes[scp])
 
     return templates.TemplateResponse(
         request=request,
         name="id_entry.html",
-        context={"id": oidc.id, "default": default_user},
+        context={"id": oidc.id, "claims": claims},
     )
 
 
@@ -162,7 +173,7 @@ async def submit_and_redirect(
 
     assert oidc.code
     oidc.claims = parsed_claims
-    await store.set(f"oidc:code:{oidc.code}", value=oidc, ttl=5.0)
+    await store.set(f"oidc:code:{oidc.code}", value=oidc, ttl=30.0)
 
     return RedirectResponse(
         url_with_query(oidc.redirect_uri, state=oidc.state, code=oidc.code),
@@ -245,7 +256,7 @@ async def token(
 
     token = jwt.sign(
         headers={
-            "alg": "EdDSA",
+            "alg": config.client.id_token_signed_response_alg,
             "kid": key.get_jwk_thumbprint(),
         },
         payload={
@@ -262,10 +273,15 @@ async def token(
         },
         key=key,
     )
+    at = token_urlsafe()
+    await store.set(f"oidc:token:{at}", None, ttl=300.0)
 
-    return {
+    response = {
         "token_type": "Bearer",
         "expires_in": 300,
         "scope": oidc.scope,
         "id_token": token,
+        "access_token": token_urlsafe(),
     }
+    LOGGER.debug("response: %s", response)
+    return response
