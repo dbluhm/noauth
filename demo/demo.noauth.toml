@@ -2,8 +2,8 @@
 issuer = "http://noauth"
 
 [noauth.client]
-client_id = "example"
-client_secret = "supersecret"
+client_id = "wordpress"
+client_secret = "asdfasdfasdf"
 id_token_signed_response_alg = "ES256"
 
 [noauth.default]

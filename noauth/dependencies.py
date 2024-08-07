@@ -1,43 +1,81 @@
 """Common dependencies."""
 
-from contextvars import Context, ContextVar
-from typing import Callable, TypeVar, cast
-from aries_askar import Store as AStore
+from contextlib import asynccontextmanager
+import logging
+from pathlib import Path
+from aries_askar import Key, KeyAlg
+from fastapi import FastAPI
 
 from noauth.config import NoAuthConfig
+from noauth.store import TemporalKVStore
 
 
-Store: ContextVar[AStore] = ContextVar("Store")
-default_user: ContextVar[dict] = ContextVar("default_user")
-default_token: ContextVar[dict] = ContextVar("default_token")
-Config: ContextVar[NoAuthConfig] = ContextVar("Config")
-
-context = Context()
-
-T = TypeVar("T")
+LOGGER = logging.getLogger(__name__)
 
 
-def get(var: ContextVar[T]) -> Callable[[], T]:
-    """Get a context var as a dependency."""
-
-    def _get():
-        return context.get(var)
-
-    return cast(Callable[[], T], _get)
+_store: TemporalKVStore
+_default_user: dict
+_default_token: dict
+_config: NoAuthConfig
+_key: Key
 
 
-def setup(
-    store: AStore,
-    config: NoAuthConfig,
-    user: dict,
-    token: dict,
-):
+def store() -> TemporalKVStore:
+    """Return store."""
+    global _store
+    return _store
+
+
+def default_user() -> dict:
+    """Return default_user."""
+    global _default_user
+    return _default_user
+
+
+def default_token() -> dict:
+    """Return default_token."""
+    global _default_token
+    return _default_token
+
+
+def config() -> NoAuthConfig:
+    """Return config."""
+    global _config
+    return _config
+
+
+def key() -> Key:
+    """Return key."""
+    global _key
+    return _key
+
+
+@asynccontextmanager
+async def setup(app: FastAPI):
     """Setup context."""
+    global _store
+    global _default_user
+    global _default_token
+    global _config
+    global _key
 
-    def _setup():
-        Store.set(store)
-        Config.set(config)
-        default_user.set(user)
-        default_token.set(token)
+    _config = NoAuthConfig.load("./noauth.toml")
+    store_path = Path("/var/lib/noauth/store.db")
+    store_path.parent.mkdir(parents=True, exist_ok=True)
+    _store = await TemporalKVStore().open()
 
-    context.run(_setup)
+    LOGGER.debug(
+        "id_token_signed_response_alg: %s", _config.client.id_token_signed_response_alg
+    )
+    if _config.client.id_token_signed_response_alg == "ES256":
+        _key = Key.generate(KeyAlg.P256)
+    else:
+        _key = Key.generate(KeyAlg.ED25519)
+
+    _default_user = _config.default
+    _default_token = _config.token or {}
+
+    try:
+        yield
+    finally:
+        await _store.close()

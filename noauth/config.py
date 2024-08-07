@@ -14,22 +14,26 @@ class OIDCConfig(BaseModel):
     issuer: str
 
 
+class ClientConfig(BaseModel):
+    """OIDC Client configuration."""
+
+    client_id: str
+    client_secret: str
+    id_token_signed_response_alg: str
+
+
 class NoAuthConfig(BaseModel):
     """NoAuth Service Config.
 
-    Configuration can be loaded from either a file or the environment or both.
-    If both, environment overrides file.
-
-    Environment variables will be of the form:
-        NOAUTH_<config option in screaming snake case>=<value>
-    For example:
-        NOAUTH_ISSUER=http://example.com
+    Configuration must be loaded from a file.
+    By default, noauth.toml or NOAUTH_CONFIG is read.
     """
 
-    passphrase: str
     oidc: OIDCConfig
+    client: ClientConfig
     default: Dict[str, Any]
     token: Optional[Dict[str, Any]] = None
+    scopes: Optional[Dict[str, Any]] = None
 
     @classmethod
     def load(cls, path: Union[str, Path, None] = None) -> "NoAuthConfig":
@@ -47,14 +51,6 @@ class NoAuthConfig(BaseModel):
                 table = tomllib.load(f)
 
             config.update(table.get("noauth", {}))
-
-        env_to_config = {
-            f"NOAUTH_{field.upper()}": field for field in cls.model_fields.keys()
-        }
-        for var in env_to_config.keys():
-            value = getenv(var)
-            if value:
-                config[env_to_config[var]] = value
 
         try:
             return cls.model_validate(config)
