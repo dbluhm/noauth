@@ -1,27 +1,30 @@
 """OpenID Connect."""
 
+from copy import deepcopy
 from dataclasses import asdict, dataclass
 import json
 import logging
 from secrets import token_urlsafe
 from time import time
-from typing import List, Mapping, Optional, Union, cast
+from typing import List, Mapping, Optional, Union
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from uuid import uuid4
 
-from aries_askar import Key, Store as AStore
+from aries_askar import Key
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.datastructures import UploadFile
 
 from noauth.config import NoAuthConfig
-from noauth.dependencies import Store, get, default_user, Config
+from noauth.dependencies import config, default_user, key, store
+from noauth.store import TemporalKVStore
 from noauth.templates import templates
 from noauth import jwt
 
 
 router = APIRouter()
-LOGGER = logging.getLogger("uvicorn.error." + __name__)
+LOGGER = logging.getLogger(__name__)
+TTL = 30
 
 
 def url_with_query(url: str, **params: str) -> str:
@@ -78,7 +81,7 @@ class OpenIDConfiguration:
 
 @router.get("/.well-known/openid-configuration")
 async def configuration(
-    config: NoAuthConfig = Depends(get(Config)),
+    config: NoAuthConfig = Depends(config),
 ):
     """Return openid-configuration."""
     return OpenIDConfiguration(
@@ -88,21 +91,17 @@ async def configuration(
         jwks_uri=f"{config.oidc.issuer}/oidc/keys",
         response_types_supported=["code"],
         subject_types_supported=["public"],
-        id_token_signing_alg_values_supported=["EdDSA"],
+        id_token_signing_alg_values_supported=[
+            config.client.id_token_signed_response_alg
+        ],
     )
 
 
 @router.get("/oidc/keys")
 async def keys(
-    store: AStore = Depends(get(Store)),
+    key: Key = Depends(key),
 ):
     """Return keys."""
-    async with store.session() as session:
-        key_entry = await session.fetch_key("jwt")
-        if not key_entry:
-            raise HTTPException(500)
-        key = cast(Key, key_entry.key)
-
     jwk = json.loads(key.get_jwk_public())
     jwk["kid"] = key.get_jwk_thumbprint()
     return {"keys": [jwk]}
@@ -116,8 +115,9 @@ async def authorize(
     redirect_uri: str = Query(),
     scope: str = Query(),
     state: str = Query(),
-    store: AStore = Depends(get(Store)),
-    default_user: dict = Depends(get(default_user)),
+    store: TemporalKVStore = Depends(store),
+    default_user: dict = Depends(default_user),
+    config: NoAuthConfig = Depends(config),
 ):
     """OIDC Authorize endpoint."""
     if response_type != "code":
@@ -138,17 +138,18 @@ async def authorize(
         state=state,
         code=code,
     )
-    async with store.session() as session:
-        await session.insert(
-            category="oidc",
-            name=oidc.id,
-            value_json=oidc.serialize(),
-        )
+    await store.set(key=f"oidc:{oidc.id}", value=oidc, ttl=30.0)
+    claims = deepcopy(default_user)
+    for scp in scope.split(" "):
+        if scp == "openid":
+            continue
+        if config.scopes and scp in config.scopes:
+            claims.update(config.scopes[scp])
 
     return templates.TemplateResponse(
         request=request,
         name="id_entry.html",
-        context={"id": oidc.id, "default": default_user},
+        context={"id": oidc.id, "claims": claims},
     )
 
 
@@ -156,7 +157,7 @@ async def authorize(
 async def submit_and_redirect(
     id: str,
     claims: str = Form(),
-    store: AStore = Depends(get(Store)),
+    store: TemporalKVStore = Depends(store),
 ):
     """Redirect back to the client."""
     try:
@@ -164,18 +165,15 @@ async def submit_and_redirect(
     except json.JSONDecodeError:
         raise HTTPException(400, "Invalid claims")
 
-    async with store.session() as session:
-        oidc_entry = await session.fetch("oidc", id, for_update=True)
+    oidc = await store.get("oidc:" + id)
 
-        if not oidc_entry:
-            raise HTTPException(403, "Unknown exchange")
+    if oidc is None:
+        raise HTTPException(403, "Unknown exchange")
+    assert isinstance(oidc, OIDCRecord)
 
-        oidc = OIDCRecord.deserialize(oidc_entry.value_json)
-        assert oidc.code
-        oidc.claims = parsed_claims
-        await session.replace(
-            "oidc", id, value_json=oidc.serialize(), tags={"code": oidc.code}
-        )
+    assert oidc.code
+    oidc.claims = parsed_claims
+    await store.set(f"oidc:code:{oidc.code}", value=oidc, ttl=30.0)
 
     return RedirectResponse(
         url_with_query(oidc.redirect_uri, state=oidc.state, code=oidc.code),
@@ -234,8 +232,9 @@ class TokenForm:
 @router.post("/oidc/token")
 async def token(
     request: Request,
-    store: AStore = Depends(get(Store)),
-    config: NoAuthConfig = Depends(get(Config)),
+    store: TemporalKVStore = Depends(store),
+    key: Key = Depends(key),
+    config: NoAuthConfig = Depends(config),
 ):
     """OIDC Token endpoint."""
     form = TokenForm.validate(await request.form())
@@ -246,18 +245,10 @@ async def token(
     if form.grant_type != "authorization_code":
         raise HTTPException(400, "only authorization_code grant_type supported")
 
-    async with store.session() as session:
-        oidc_entries = await session.fetch_all("oidc", {"code": form.code}, limit=2)
-        if len(oidc_entries) > 1:
-            LOGGER.error("Duplicate code found: %s", form.code)
-            raise HTTPException(500)
-
-        oidc = OIDCRecord.deserialize(oidc_entries[0].value_json)
-        key_entry = await session.fetch_key("jwt")
-        if not key_entry:
-            LOGGER.error("key missing")
-            raise HTTPException(500)
-        key = cast(Key, key_entry.key)
+    oidc = await store.get(f"oidc:code:{form.code}")
+    if oidc is None:
+        raise HTTPException(404)
+    assert isinstance(oidc, OIDCRecord)
 
     assert oidc.claims
 
@@ -265,7 +256,7 @@ async def token(
 
     token = jwt.sign(
         headers={
-            "alg": "EdDSA",
+            "alg": config.client.id_token_signed_response_alg,
             "kid": key.get_jwk_thumbprint(),
         },
         payload={
@@ -282,10 +273,15 @@ async def token(
         },
         key=key,
     )
+    at = token_urlsafe()
+    await store.set(f"oidc:token:{at}", None, ttl=300.0)
 
-    return {
+    response = {
         "token_type": "Bearer",
         "expires_in": 300,
         "scope": oidc.scope,
         "id_token": token,
+        "access_token": token_urlsafe(),
     }
+    LOGGER.debug("response: %s", response)
+    return response

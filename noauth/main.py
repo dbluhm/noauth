@@ -1,50 +1,50 @@
 """NoAuth."""
 
-from contextlib import asynccontextmanager
 import logging
-from os import getenv
-from pathlib import Path
+import logging.config
 
-from aries_askar import Key, KeyAlg, Store as AStore
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from noauth.config import NoAuthConfig
 from noauth.dependencies import setup
 
 from noauth import oidc
 from noauth import manual
 
-ACAPY = getenv("ACAPY", "http://localhost:3001")
 
-logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
+LOG_LEVEL = logging.DEBUG
+logging.config.dictConfig(
+    {
+        "version": 1,
+        "disable_existing_loggers": True,
+        "formatters": {
+            "standard": {
+                "format": "[%(asctime)s] %(levelname)s %(name)s: %(message)s",
+            },
+        },
+        "handlers": {
+            "default": {
+                "class": "logging.StreamHandler",
+                "formatter": "standard",
+                "stream": "ext://sys.stdout",
+            },
+        },
+        "loggers": {
+            "noauth": {
+                "handlers": ["default"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            "uvicorn": {
+                "handlers": ["default"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+        },
+    }
+)
 
-
-@asynccontextmanager
-async def init_deps(app: FastAPI):
-    """Test connectivity to ACA-Py."""
-    config = NoAuthConfig.load("./noauth.toml")
-    store_path = Path("/var/lib/noauth/store.db")
-    store_path.parent.mkdir(parents=True, exist_ok=True)
-    store = await AStore.provision(
-        f"sqlite://{store_path}", "kdf:argon2i", config.passphrase
-    )
-
-    async with store.session() as session:
-        key_entry = await session.fetch_key("jwt")
-        if not key_entry:
-            key = Key.generate(KeyAlg.ED25519)
-            await session.insert_key("jwt", key)
-
-    setup(store, config, config.default, config.token or {})
-
-    try:
-        yield
-    finally:
-        await store.close()
-
-
-app = FastAPI(lifespan=init_deps)
+app = FastAPI(lifespan=setup)
 
 app.include_router(oidc.router)
 app.include_router(manual.router)
