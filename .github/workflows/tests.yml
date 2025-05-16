@@ -11,14 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
-      - uses: pdm-project/setup-pdm@v4
+      - uses: astral-sh/setup-uv@v6
         with:
+          version: "0.7.3"
           python-version: ${{ matrix.python-version }}
-          cache: true
+          enable-cache: true
       - name: Install dependencies
-        run: pdm install -G :all
+        run: uv sync --locked --all-extras --dev
       - name: Run pytest
-        run: pdm run pytest
+        run: uv run pytest
