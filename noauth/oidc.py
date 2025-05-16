@@ -88,7 +88,7 @@ async def configuration(
         issuer=config.oidc.issuer,
         authorization_endpoint=f"{config.oidc.issuer}/oidc/authorize",
         token_endpoint=f"{config.oidc.issuer}/oidc/token",
-        jwks_uri=f"{config.oidc.issuer}/oidc/keys",
+        jwks_uri=f"{config.oidc.issuer}/.well-known/jwks.json",
         response_types_supported=["code"],
         subject_types_supported=["public"],
         id_token_signing_alg_values_supported=[
@@ -97,7 +97,7 @@ async def configuration(
     )
 
 
-@router.get("/oidc/keys")
+@router.get("/.well-known/jwks.json")
 async def keys(
     key: Key = Depends(key),
 ):

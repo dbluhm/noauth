@@ -3,6 +3,7 @@
 import json
 import logging
 from time import time
+from typing import Optional
 from uuid import uuid4
 
 from aries_askar import Key
@@ -34,6 +35,39 @@ async def manual_token(
     )
 
 
+@router.get("/api/token")
+async def api_token(
+    request: Request,
+    valid_for: Optional[int] = None,
+    default_token: dict = Depends(default_token),
+    key: Key = Depends(key),
+    config: NoAuthConfig = Depends(config),
+):
+    """Generate a token for headless access."""
+    query = request.query_params
+    additional_claims = dict(query)
+    claims = {**default_token, **additional_claims}
+
+    valid_for = valid_for or 300
+    now = int(time())
+
+    token = jwt.sign(
+        headers={
+            "alg": config.client.id_token_signed_response_alg,
+            "kid": key.get_jwk_thumbprint(),
+        },
+        payload={
+            "exp": now + valid_for,
+            "iat": now,
+            "jti": str(uuid4()),
+            "iss": config.oidc.issuer,
+            **claims,
+        },
+        key=key,
+    )
+    return {"token": token}
+
+
 @router.post("/token")
 async def post_manual_token_and_redirect(
     claims: str = Form(),
@@ -53,7 +87,7 @@ async def post_manual_token_and_redirect(
 
     token = jwt.sign(
         headers={
-            "alg": "EdDSA",
+            "alg": config.client.id_token_signed_response_alg,
             "kid": key.get_jwk_thumbprint(),
         },
         payload={
