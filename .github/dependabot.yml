@@ -14,7 +14,7 @@ updates:
         patterns: ["*"]
 
   # Maintain pip dependencies
-  - package-ecosystem: pip
+  - package-ecosystem: uv
     directory: /
     schedule:
       interval: weekly
